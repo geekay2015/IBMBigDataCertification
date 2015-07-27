@@ -177,6 +177,20 @@ PlanInfoCounty3 = UNION PlanInfoCounty1, PlanInfoCounty2;
 --Verify the unioned relation;
 DESCRIBE PlanInfoCounty3;
 
+--Verfiy the counts in all three relation;
+GRP1= GROUP PlanInfoCounty1 ALL;
+GRP1_CNT = FOREACH GRP1 GENERATE COUNT($1);
+DUMP GRP1_CNT; /*Output 586076*/
+
+GRP2= GROUP PlanInfoCounty2 ALL;
+GRP2_CNT = FOREACH GRP2 GENERATE COUNT($1);
+DUMP GRP2_CNT; /*Output 596815*/
+
+GRP3= GROUP PlanInfoCounty3 ALL;
+GRP3_CNT = FOREACH GRP3 GENERATE COUNT($1);
+DUMP GRP3_CNT; /*Output 1182891*/
+
+
 --Filter the records with null values for the key fields;
 PlanInfoCounty4 = FILTER PlanInfoCounty3 BY 
                       (contract_id !='' OR contract_id !='NULL')
@@ -185,4 +199,8 @@ PlanInfoCounty4 = FILTER PlanInfoCounty3 BY
                   AND (CountyFIPSCode != '' OR CountyFIPSCode != 'NULL')
                   AND (plan_name != '' OR plan_name != 'NULL');
 
+--Verify the filter count;
+GRP4= GROUP PlanInfoCounty3 ALL;
+GRP4_CNT = FOREACH GRP4 GENERATE COUNT($1);
+DUMP GRP4_CNT; /*Output 1182891*/
 
