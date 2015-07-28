@@ -1,10 +1,23 @@
-/*Medicare.pig*/
+/************************************************************************************/
+/*** Program Name : MediCarePlanAnalysis.pig                                      ***/
+/*** Author       : Gangadhar Kadam                                               ***/
+/*** Project      : Medicare Analysis                                             ***/
+/*** PIG version  : pig-0.13.0                                                    ***/
+/*** HDFS Version : hadoop-2.6.0                                                  ***/
+/************************************************************************************/
 
---Register the Jar file;
-REGISTER /Users/gk/Downloads/piggybank-0.12.0.jar;
+/************************************************************************************/
+/*** Register the jar and UDFS                                                  *****/
+/************************************************************************************/
+
+REGISTER /Users/gk/IBM/lib/piggybank-0.12.0.jar;
+
+/************************************************************************************/
+/*** Process the Plan information file                                            ***/
+/************************************************************************************/
 
 --Load the plan info file PlanInfoCounty_FipsCodeLessThan30000.csv;
-PlanInfoCounty1 = LOAD '/Users/gk/Downloads/PlanInfoCounty_FipsCodeLessThan30000.csv' 
+PlanInfoCounty1 = LOAD '/Users/gk/IBM/input/PlanInfoCounty_FipsCodeLessThan30000.csv' 
                   USING org.apache.pig.piggybank.storage.CSVExcelStorage() AS 
                   (
                   contract_id : chararray, 
@@ -88,7 +101,7 @@ PlanInfoCounty1 = LOAD '/Users/gk/Downloads/PlanInfoCounty_FipsCodeLessThan30000
 DESCRIBE PlanInfoCounty1;
 
 --Load the Plan info file PlanInfoCounty_FipsCodeMoreThan30000.csv;
-PlanInfoCounty2 = LOAD '/Users/gk/Downloads/PlanInfoCounty_FipsCodeMoreThan30000.csv' 
+PlanInfoCounty2 = LOAD '/Users/gk/IBM/input/PlanInfoCounty_FipsCodeMoreThan30000.csv' 
                   USING org.apache.pig.piggybank.storage.CSVExcelStorage() AS 
                   (
                   contract_id : chararray, 
@@ -191,16 +204,89 @@ GRP3_CNT = FOREACH GRP3 GENERATE COUNT($1);
 DUMP GRP3_CNT; /*Output 1182891*/
 
 
---Filter the records with null values for the key fields;
-PlanInfoCounty4 = FILTER PlanInfoCounty3 BY 
-                      (contract_id !='' OR contract_id !='NULL')
-                  AND (plan_id != '' OR plan_id != 'NULL')
-                  AND (segment_id !='' OR segment_id != 'NULL')
-                  AND (CountyFIPSCode != '' OR CountyFIPSCode != 'NULL')
-                  AND (plan_name != '' OR plan_name != 'NULL');
+--Filter the null records and subset the data;
+PlanInfoCounty4 = FOREACH(
+                  FILTER PlanInfoCounty3 
+                  BY (contract_id !='' OR contract_id !='NULL')
+                     AND (plan_id != '' OR plan_id != 'NULL')
+                     AND (segment_id !='' OR segment_id != 'NULL')
+                     AND (CountyFIPSCode != '' OR CountyFIPSCode != 'NULL')
+                     AND (plan_name != '' OR plan_name != 'NULL')
+                  )
+                  GENERATE
+                    contract_id,
+                    plan_id,
+                    segment_id,
+                    plan_name,
+                    CountyFIPSCode;
 
 --Verify the filter count;
 GRP4= GROUP PlanInfoCounty3 ALL;
 GRP4_CNT = FOREACH GRP4 GENERATE COUNT($1);
 DUMP GRP4_CNT; /*Output 1182891*/
+
+--Store the relation to local directories;
+STORE PlanInfoCounty4 INTO '/Users/gk/IBM/output/PlanInfoCounty' using PigStorage(',','-schema');
+
+/***************************************************************************/
+/*** Process the Plan services file                                      ***/
+/***************************************************************************/
+
+PlanServices1 = LOAD '/Users/gk/IBM/input/vwPlanServices.csv' 
+                USING org.apache.pig.piggybank.storage.CSVExcelStorage() AS 
+                (Language : chararray,
+                Contract_Year : chararray,
+                Contract_ID : chararray,
+                Plan_ID : chararray,
+                Segment_ID : chararray,
+                CategoryDescription : chararray,
+                CategoryCode : chararray,
+                Benefit : chararray,
+                package_name : chararray,
+                package_id : chararray,
+                sentences_sort_order : chararray
+                );
+                
+-- Verify the PlanServices1;
+DESCRIBE PlanServices1;
+
+--Verfiy the counts;
+PS1= GROUP PlanServices1 ALL;
+PS1_CNT = FOREACH PS1 GENERATE COUNT($1);
+DUMP PS1_CNT; /*Output 567797*/
+
+--Filter the null records and Subset the data;
+--Use regular expression pig function to extract the prem value;
+PlanServices2 = FOREACH( 
+                FILTER PlanServices1 
+                  BY Language == 'English' 
+                    AND Contract_ID !='' 
+                    AND Plan_ID != ''
+                    AND Segment_ID != ''
+                    AND Benefit != ''
+                    )
+                GENERATE 
+                  Contract_ID, 
+                  Plan_ID, 
+                  CategoryDescription, 
+                  CategoryCode, 
+                  Benefit, 
+                  package_name,
+                  REGEX_EXTRACT(Benefit, '<b>(.*)</b>', 1) as prm_amt;
+
+--Verify the relation;
+DESCRIBE PlanServices2;
+
+--Verfiy the counts;
+PS2= GROUP PlanServices2 ALL;
+PS2_CNT = FOREACH PS2 GENERATE COUNT($1);
+DUMP PS2_CNT; /*Output 283898*/
+
+--Store the relation to local directories;
+STORE PlanServices2 INTO '/Users/gk/IBM/output/PlanServices' using PigStorage(',','-schema');
+
+
+
+
+
 
