@@ -9,14 +9,38 @@
 /************************************************************************************/
 /* Create and Laod  PlanInfoCounty external table
 /************************************************************************************/
+
+--Create a plan info table;
+CREATE EXTERNAL TABLE PLAN_INFO_COUNTY 
+  (
+  contract_id string,
+  plan_id string,
+  segment_id string,
+  plan_name string,
+  CountyFIPSCode string
+  ) 
+  COMMENT 'Plan Information Table created by pig Output' 
+  PARTITIONED BY(FILENAME string) 
+  ROW FORMAT DELIMITED 
+  FIELDS TERMINATED BY',' 
+  LINES TERMINATED BY'\n' 
+  STORED AS TEXTFILE;
+  
+  --Add the partion by file names;
+  ALTER TABLE PLAN_INFO_COUNTY ADD PARTITION(filename ='part-m-00000');
+  
+  --Load the Data
+LOAD DATA INPATH "/Users/gk/IBM/output/PlanInfoCounty/part-m-00000"
+INTO TABLE PLAN_INFO_COUNTY PARTITION(FILENAME ='part-m-00000');
+
+
+/************************************************************************************/
+/* Create and Load  PlanServices external table
+/************************************************************************************/
+
                   Contract_ID, 
                   Plan_ID, 
                   CategoryDescription, 
                   CategoryCode, 
                   Benefit, 
                   package_name,
-/************************************************************************************/
-/* Create and Load  PlanServices external table
-/************************************************************************************/
-
-PlanServices2: {Contract_ID: chararray,Plan_ID: chararray,CategoryDescription: chararray,CategoryCode: chararray,Benefit: chararray,package_name: chararray,prm_amt: chararray}
