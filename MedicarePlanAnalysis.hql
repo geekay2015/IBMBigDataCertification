@@ -56,20 +56,9 @@ LOAD DATA INPATH '/IBM/DATA/PlanServices/part-m-*'
 INTO TABLE PLAN_SERVICES;
 
 --Plan with lowest premium
-CREATETABLE TOP5_LOW_PRM_PLAN AS
-SELECT
-  t1.contractid
-	.planid
-	,A.segmentid
-	,A.categorydesc
-	,A.categorycode
-	,B.plan_name
-	,b.countyfipscode
-	,regexp_extract(A.benefit,'<[a-z]>[$](.*)</[a-z]>', 1)AS premium
-FROMPlanServiceFinal A
-INNER JOINPlanInfoFinal B ONA.contractid=B.contract_id
-	ANDA.planid=B.plan_id
-	ANDA.segmentid=B.segment_id
-WHEREA.benefitLIKE'%remium%'
-	ANDregexp_extract(A.benefit,'<[a-z]>[$](.*)</[a-z]>', 1)> 0;
+CREATE TABLE PLANS_BY_PRM AS
+SELECT t1.Contract_ID,t1.Plan_ID,t2.plan_name,t2.CountyFIPSCode,t1.CategoryCode,t1.CategoryDescription,t1.prm_amt
+FROM PLAN_SERVICES t1 INNER JOIN PLAN_INFO_COUNTY t2
+ON t1.Contract_ID = t2.contract_ID AND t1.Plan_ID = t2.plan_id
+WHERE t1.Benefit LIKE '%remium%' AND regexp_extract(t1.Benefit,'<[a-z]>[$](.*)</[a-z]>', 1)> 0;
 
