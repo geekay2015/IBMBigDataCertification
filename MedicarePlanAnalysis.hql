@@ -57,8 +57,35 @@ INTO TABLE PLAN_SERVICES;
 
 --Plan with lowest premium
 CREATE TABLE PLANS_BY_PRM AS
-SELECT t1.Contract_ID,t1.Plan_ID,t2.plan_name,t2.CountyFIPSCode,t1.CategoryCode,t1.CategoryDescription,t1.prm_amt
-FROM PLAN_SERVICES t1 INNER JOIN PLAN_INFO_COUNTY t2
-ON t1.Contract_ID = t2.contract_ID AND t1.Plan_ID = t2.plan_id
-WHERE t1.Benefit LIKE '%remium%' AND regexp_extract(t1.Benefit,'<[a-z]>[$](.*)</[a-z]>', 1)> 0;
+  SELECT 
+    t1.Contract_ID,
+    t1.Plan_ID,
+    t2.plan_name,
+    t2.CountyFIPSCode,
+    t1.CategoryCode,
+    t1.CategoryDescription,
+    t1.prm_amt
+  FROM 
+    PLAN_SERVICES t1 INNER JOIN PLAN_INFO_COUNTY t2
+  ON 
+    t1.Contract_ID = t2.contract_ID AND t1.Plan_ID = t2.plan_id
+  WHERE 
+    t1.Benefit LIKE '%remium%' AND regexp_extract(t1.Benefit,'<[a-z]>[$](.*)</[a-z]>', 1)> 0;
 
+--Change the data typr;
+ALTER TABLE PLANS_BY_PRM CHANGE CountyFIPSCode CountyFIPSCode BIGINT; 
+ALTER TABLE PLANS_BY_PRM CHANGE prm_amt prm_amt FLOAT;
+
+--Order the data by premium;
+CREATE TABLE LOW_PRM_PLNS AS
+SELECT
+  Contract_ID,
+  Plan_ID,
+  plan_name,
+  CountyFIPSCode,
+  prm_amt
+FROM 
+  PLANS_BY_PRM
+WHERE
+  CountyFIPSCode IS NOT NULL
+ORDER BY countyfipscode, prm_amt ASC;
