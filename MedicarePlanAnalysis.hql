@@ -126,7 +126,7 @@ Time taken: 0.045 seconds, Fetched: 10 row(s)
 */
 
 /************************************************************************************/
-/* Plan with Highest copays                                                                                 */
+/* Plan with Highest copays                                                         */
 /************************************************************************************/
 CREATE TABLE CO_PAY_PLANS AS
 SELECT 
@@ -160,33 +160,76 @@ SELECT
 FROM
 (
 SELECT
-  contract_id,
-  plan_ID,
-  plan_name,
-  county_cd,
-  copay,
-  rank() over (PARTITION BY county_cd ORDER BY copay DESC) as RANK 
-FROM
-  CO_PAY_PLANS
+  A.*,
+  rank() over (PARTITION BY A.county_cd ORDER BY A.copay DESC) as RANK 
+FROM 
+(SELECT distinct contract_id,plan_ID, plan_name,county_cd,copay FROM CO_PAY_PLANS) A
 ) RNK
 WHERE 
-  RNK.RANK <=5
+  RNK.RANK <= 5
   AND county_cd IS NOT NULL AND copay IS NOT NULL 
 ORDER BY 
   county_cd,copay DESC;
-  
-/*********
+
+/***
 H0154	001	VIVA Medicare Plus (HMO)	1001	50.0
 H0154	008	VIVA Medicare Select (HMO)	1001	45.0
 H0151	001	AARP MedicareComplete Plan 1 (HMO)	1001	45.0
 H0150	024	Cigna-HealthSpring Preferred (HMO)	1001	40.0
+H0104	011	Blue Advantage Complete (PPO)	1001	40.0
 H0150	012	Cigna-HealthSpring Advantage (HMO)	1001	40.0
 
 H0154	001	VIVA Medicare Plus (HMO)	1003	50.0
 H0151	001	AARP MedicareComplete Plan 1 (HMO)	1003	45.0
 H0154	008	VIVA Medicare Select (HMO)	1003	45.0
 H0150	024	Cigna-HealthSpring Preferred (HMO)	1003	40.0
+H0150	012	Cigna-HealthSpring Advantage (HMO)	1003	40.0
+H0104	011	Blue Advantage Complete (PPO)	1003	40.0
 
+***/
 
-**************/
+/************************************************************************************/
+/* Plans that provide ambulance service                                             */
+/************************************************************************************/
+CREATE TABLE AMB_PLANS AS
+SELECT 
+  t1.contract_ID as contract_id,
+  t1.plan_id as plan_id,
+  t1.plan_name as plan_name,
+  cast(t1.CountyFIPSCode as BIGINT) as county_cd,
+  t2.CategoryDescription,
+  cast(regexp_extract(t2.Benefit,'<[a-z]>[$](.*)</[a-z]>', 1) as FLOAT) as prm_amt
+FROM
+  PLAN_INFO_COUNTY t1
+LEFT OUTER JOIN 
+  PLAN_SERVICES t2 
+ON 
+  t1.contract_ID  = t2.Contract_ID 
+  AND t1.plan_id = t2.Plan_ID
+WHERE 
+  t2.CategoryDescription LIKE '%mbulance%'
+  AND regexp_extract(t2.Benefit,'<[a-z]>[$](.*)</[a-z]>', 1)> 0
+  AND CountyFIPSCode IS NOT NULL
+ORDER BY county_cd, prm_amt ASC;
 
+--Rank it by county copay
+CREATE TABLE AMB_PLANS1 AS
+SELECT
+  contract_id,
+  plan_ID,
+  plan_name,
+  county_cd,
+  prm_amt
+FROM
+(
+SELECT
+  A.*,
+  rank() over (PARTITION BY A.county_cd ORDER BY A.prm_amt ASC) as RANK 
+FROM 
+(SELECT distinct contract_id,plan_ID, plan_name,county_cd,prm_amt FROM AMB_PLANS) A
+) RNK
+WHERE 
+  RNK.RANK <= 5
+  AND county_cd IS NOT NULL AND prm_amt IS NOT NULL 
+ORDER BY 
+  county_cd,prm_amt ASC;
