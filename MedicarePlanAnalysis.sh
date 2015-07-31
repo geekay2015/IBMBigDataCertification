@@ -7,13 +7,14 @@ DB_USERNAME="root"
 DB_PASSWORD="root"
 
 DB_TABLE_NAME="[TOP5_PLANS_BY_LOW_PRM]"
-DB_COLUMNS="COL1, COL2, COL3, COL4"
+DB_COLUMNS="contract_id, plan_ID, plan_name,county_cd,prm_amt"
 
-EXPORT_DIR="/user/hadoop/result_rc/keyword-r-00000"
+
+EXPORT_DIR="/user/hive/warehouse/top5_plans_by_low_prm"
 EXPORT_DIR2="/tmp/temp_org"
 
 ##### sqoop Query #####
-/home/hadoop/sqoop/bin/sqoop export \
+/usr/local/sqoop/bin/sqoop export \
 --verbose \
 --connect ${DB_CON} \
 --username ${DB_USERNAME} \
