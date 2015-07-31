@@ -1,0 +1,40 @@
+--Issues and Learning
+
+#Issue1:- 
+  Error in metadata: javax.jdo.JDOFatalDataStoreExceptio
+Issue Resolution- Remove the .lck file
+  rm -rf /usr/local/hive/hive-0.12.0/metastore_db/*.lck
+
+#Issue2:- 
+  Unable to move the file from local dir to HDFS dir
+#Issue Resolution -add the permission to admin.hive
+  bin/hdfs dfs -chown -R admin.hive /IBM/DATA/PlanServices
+
+#Issue3:-
+  Datanode was not starting and all other daemons were running
+#Issue Resolution-
+  --Stop all the daemons;
+  /usr/local/hadoop/hadoop-2.6.0/sbin/stop-dfs.sh
+  /usr/local/hadoop/hadoop-2.6.0/sbin/stop-yarn.sh
+
+  --Format the namenode
+  /usr/local/hadoop/hadoop-2.6.0/bin/hdfs namenode -format
+
+  --Start all the daemons;
+  /usr/local/hadoop/hadoop-2.6.0/sbin/start-dfs.sh
+  /usr/local/hadoop/hadoop-2.6.0/sbin/start-yarn.sh
+
+#Issue4:-
+  Not able to load the csv file to a relation
+#Issue Resolution-
+  --Add the REGISTER Command
+  REGISTER /Users/gk/Downloads/piggybank-0.12.0.jar;
+
+#Issue5:-
+  Pig and hive not able to invoke
+#Issue Resolution-
+  --Add the below to the .profile file
+  export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home
+
+
+
