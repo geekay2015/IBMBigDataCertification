@@ -6,7 +6,7 @@ DB_CON="jdbc:mysql://127.0.0.1:9000/hadoop_test?useUnicode=true&amp;characterEnc
 DB_USERNAME="root"
 DB_PASSWORD="root"
 
-DB_TABLE_NAME="[]"
+DB_TABLE_NAME="[TOP5_PLANS_BY_LOW_PRM]"
 DB_COLUMNS="COL1, COL2, COL3, COL4"
 
 EXPORT_DIR="/user/hadoop/result_rc/keyword-r-00000"
